@@ -1,51 +1,29 @@
-#include <ctime>
 #include <iostream>
+#include <Eigen/Dense>
 
-#include "stdafx.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include "interpolation.h"
-
-using namespace alglib;
+using namespace std;
 
 
-int main(int argc, char **argv)
+float f(float x) {
+	return x*x*x*x + x*x*x + x*x + x + 1;
+}
+
+int main()
 {
-	//
-	// We use cubic spline to interpolate f(x)=x^2 sampled 
-	// at 5 equidistant nodes on [-1,+1].
-	//
-	// First, we use default boundary conditions ("parabolically terminated
-	// spline") because cubic spline built with such boundary conditions 
-	// will exactly reproduce any quadratic f(x).
-	//
-	// Then we try to use natural boundary conditions
-	//     d2S(-1)/dx^2 = 0.0
-	//     d2S(+1)/dx^2 = 0.0
-	// and see that such spline interpolated f(x) with small error.
-	//
-	real_1d_array x = "[-1.0,-0.5,0.0,+0.5,+1.0]";
-	real_1d_array y = "[+1.0,0.25,0.0,0.25,+1.0]";
-	double t = 0.25;
-	double v;
-	spline1dinterpolant s;
-	ae_int_t natural_bound_type = 2;
-	//
-	// Test exact boundary conditions: build S(x), calculare S(0.25)
-	// (almost same as original function)
-	//
-	spline1dbuildcubic(x, y, s);
-	v = spline1dcalc(s, t);
-	printf("%.4f\n", double(v)); // EXPECTED: 0.0625
-
-								 //
-								 // Test natural boundary conditions: build S(x), calculare S(0.25)
-								 // (small interpolation error)
-								 //
-	spline1dbuildcubic(x, y, 5, natural_bound_type, 0.0, natural_bound_type, 0.0, s);
-	v = spline1dcalc(s, t);
-	printf("%.3f\n", double(v)); // EXPECTED: 0.0580
-	std::cout << s << endl;
+	Eigen::MatrixXf A(7, 5);
+	A.setZero();
+	Eigen::VectorXf b(7);
+	for (int x = 0; x < 7; x++) {
+		b(x) = f(x);
+		A(x, 0) = 1;
+		A(x, 1) = x;
+		A(x, 2) = x*x;
+		A(x, 3) = x*x*x;
+		A(x, 4) = x*x*x*x;
+	}
+	cout << "A" << endl << A << endl;
+	cout << "b" << endl << b << endl;
+	cout << "The least-squares solution is:\n"
+		<< A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b) << endl;
 	return 0;
 }
