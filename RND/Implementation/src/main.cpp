@@ -4,12 +4,12 @@
 #include <../Eigen/Dense>
 //#include "Imagine/Graphics.h"
 
-using namespace std;
-//using namespace Imagine;
-
 #ifndef Pi 
 #define Pi 3.141592653589793238462643 
 #endif
+
+using namespace std;
+//using namespace Imagine;
 
 const double delta = 0.00001;
 
@@ -78,7 +78,7 @@ double phi(double x)
 {
 	//Cumulative normal distribution function
 	double L, K, w;
-	/* constants */
+	//constants
 	double const a1 = 0.31938153, a2 = -0.356563782, a3 = 1.781477937;
 	double const a4 = -1.821255978, a5 = 1.330274429;
 
@@ -92,18 +92,35 @@ double phi(double x)
 	return w;
 }
 
-double blackSholesValuation(double St, double X, double T, Polynome sigma) {
+double blackSholesValuation(double St, double X, double T, double r, Polynome sigma) {
+	//Price given by the Black Scholes formula for call option.
+
 	double result = 0;
-	double s = sigma.eval(St / X, 0);
-	result += St*phi((log(St / X) + s*s / 2 * T)/(s*sqrt(T)));
-	result -= X*phi((log(St / X) - s*s / 2 * T) / (s*sqrt(T)));
+	double m = X / St; //moneyness
+	double s = sigma.eval(X / St, 0);
+
+	result += St*phi((-log(m) + s*s / 2 * T) / (s*sqrt(T)));
+	result -= X*exp(-r*T)*phi((-log(m) - s*s / 2 * T) / (s*sqrt(T)));
 	return result;
 }
 
-double riskNeutralDistribEval(double St, double X, double T, Polynome sigma) {
+double riskNeutralDistribEval(double St, double X, double T, double r, Polynome sigma) {
+	//Evaluation of the risk-neutral distribution.
 	double result = 0;
-	blackSholesValuation(St, X + delta, T, sigma) + blackSholesValuation(St, X - delta, T, sigma) - 2 * blackSholesValuation(St, X, T, sigma);
-	return result / (delta*delta);
+
+	result += blackSholesValuation(St, X + delta, T, r, sigma);
+	result += +blackSholesValuation(St, X - delta, T, r, sigma);
+	result -= 2 * blackSholesValuation(St, X, T, r, sigma);
+	return exp(r*T)*result / (St*St*delta*delta);
+}
+
+double riskNeutralCumulDistribEval(double St, double X, double T, double r, Polynome sigma) {
+	//Evaluation of the cumulative distribution
+	double result = 1;
+
+	result += exp(r*T) / (delta*St)*blackSholesValuation(St, X + delta, T, r, sigma);
+	result -= exp(r*T) / (delta*St)*blackSholesValuation(St, X - delta, T, r, sigma);
+	return result;
 }
 
 int main()
@@ -130,7 +147,7 @@ int main()
 
 	Polynome interpolation(coeff(0), coeff(1), coeff(2), coeff(3), coeff(4));
 	cout << "Test : Evaluation in x = 0 : " << interpolation.eval(1,0) << endl;
-	cout << "Test : blackScholesEvaluation : " << blackSholesValuation(1, 2, 3, interpolation) << endl;
+	cout << "Test : blackScholesEvaluation : " << blackSholesValuation(1, 2, 3, 5.6, interpolation) << endl;
 	//graphicDisplay(interpolation);
 
 	return 0;
