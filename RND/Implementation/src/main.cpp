@@ -51,10 +51,25 @@ int main()
 	Eigen::VectorXd coeff(5);
 	coeff = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
 	cout << "The least-squares solution is:\n"
-		<< coeff << endl;
+		<< coeff << endl <<endl;
 
 	Polynome interpolation(coeff(0), coeff(1), coeff(2), coeff(3), coeff(4));
 	
+	for (int i = 1; i < 9; i++)
+		cout << riskNeutralDistribEval(i, 1, 1, 0, interpolation) << endl;
+	
+	cout << "0.2 : " << riskNeutralCumulDistribEval(0.2, 1, 3, 0, interpolation) << endl;
+	cout << "0.5 : " << riskNeutralCumulDistribEval(0.5, 1, 3, 0, interpolation) << endl;
+	cout << "1 : " << riskNeutralCumulDistribEval(1, 1, 3, 0, interpolation) << endl;
+	cout << "2 : " << riskNeutralCumulDistribEval(2, 1, 3, 0, interpolation) << endl;
+	cout << "3 : " << riskNeutralCumulDistribEval(3, 1, 3, 0, interpolation) << endl;
+	cout << "4 : " << riskNeutralCumulDistribEval(4, 1, 3, 0, interpolation) << endl;
+	cout << "5 : " << riskNeutralCumulDistribEval(5, 1, 3, 0, interpolation) << endl;
+	cout << "6 : " << riskNeutralCumulDistribEval(6, 1, 3, 0, interpolation) << endl;
+	cout << "7 : " << riskNeutralCumulDistribEval(7, 1, 3, 0, interpolation) << endl;
+	cout << "8 : " << riskNeutralCumulDistribEval(8, 1, 3, 0, interpolation) << endl;
+	cout << "10 : " << riskNeutralCumulDistribEval(10, 1, 3, 0, interpolation) << endl;
+	cout << "15 : " << riskNeutralCumulDistribEval(15, 1, 3, 0, interpolation) << endl;
 
 
 	//graphicDisplay(interpolation);

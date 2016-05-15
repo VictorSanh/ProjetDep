@@ -27,11 +27,11 @@ double blackSholesValuation(double St, double X, double T, double r, Polynome si
 	//Price given by the Black Scholes formula for call option.
 
 	double result = 0;
-	double m = X / St; //moneyness
-	double s = sigma.eval(m/100, 0); //sigma is function of r and moneyness expressed in %.
+	double m = X - St; //moneyness
+	double s = sigma.eval(m, 0); //sigma is function of r and moneyness expressed in %.
 
-	result += St*phi((-log(m) + s*s / 2 * T) / (s*sqrt(T)));
-	result -= X*exp(-r*T)*phi((-log(m) - s*s / 2 * T) / (s*sqrt(T)));
+	result += St*phi((log(St/X) + s*s / 2 * T) / (s*sqrt(T)));
+	result -= X*exp(-r*T)*phi((log(St/X) - s*s / 2 * T) / (s*sqrt(T)));
 	return result;
 }
 
@@ -42,15 +42,15 @@ double riskNeutralDistribEval(double St, double X, double T, double r, Polynome 
 	result += blackSholesValuation(St, X + delta, T, r, sigma);
 	result += +blackSholesValuation(St, X - delta, T, r, sigma);
 	result -= 2 * blackSholesValuation(St, X, T, r, sigma);
-	return exp(r*T)*result / (St*St*delta*delta);
+	return exp(r*T)*result / (delta*delta);
 }
 
 double riskNeutralCumulDistribEval(double St, double X, double T, double r, Polynome sigma) {
 	//Evaluation of the cumulative distribution
 	double result = 1;
 
-	result += exp(r*T) / (delta*St)*blackSholesValuation(St, X + delta, T, r, sigma);
-	result -= exp(r*T) / (delta*St)*blackSholesValuation(St, X - delta, T, r, sigma);
+	result += exp(r*T) / delta*blackSholesValuation(St, X + delta, T, r, sigma);
+	result -= exp(r*T) / delta*blackSholesValuation(St, X - delta, T, r, sigma);
 	return result;
 }
 

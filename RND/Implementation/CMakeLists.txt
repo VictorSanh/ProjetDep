@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (RND)
 
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
 
@@ -17,6 +16,7 @@ FIND_PACKAGE(Imagine)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
+project (RND)
 
 #Compile project located in src
 include_directories (src)
