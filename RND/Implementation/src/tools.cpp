@@ -28,10 +28,14 @@ double blackSholesValuation(double St, double X, double T, double r, Polynome si
 
 	double result = 0;
 	double m = X - St; //moneyness
-	double s = sigma.eval(m, 0); //sigma is function of r and moneyness expressed in %.
+	double s = sigma.eval(m, 0); //sigma is function of diffrence between strike and forward swap rate.
 
-	result += St*phi((log(St/X) + s*s / 2 * T) / (s*sqrt(T)));
-	result -= X*exp(-r*T)*phi((log(St/X) - s*s / 2 * T) / (s*sqrt(T)));
+	double d1 = (log(St / X) + s*s / 2 * T) / (s*sqrt(T));
+	double d2 = (log(St / X) - s*s / 2 * T) / (s*sqrt(T));
+	//std::cout << "d1 : " << phi(d1) << " d2 : " << phi(d2) << std::endl;
+	
+	result += St*phi(d1) - X*exp(-r*T)*phi(d2);
+	//std::cout << "result : " << result << std::endl;
 	return result;
 }
 
@@ -49,8 +53,8 @@ double riskNeutralCumulDistribEval(double St, double X, double T, double r, Poly
 	//Evaluation of the cumulative distribution
 	double result = 1;
 
-	result += exp(r*T) / delta*blackSholesValuation(St, X + delta, T, r, sigma);
-	result -= exp(r*T) / delta*blackSholesValuation(St, X - delta, T, r, sigma);
+	result += exp(r*T) / delta*blackSholesValuation(St, X + delta/2, T, r, sigma);
+	result -= exp(r*T) / delta*blackSholesValuation(St, X - delta/2, T, r, sigma);
 	return result;
 }
 
@@ -60,4 +64,40 @@ void fillingMatrix(Eigen::MatrixXd& A, double x) {
 	A.conservativeResize(A.rows()+1, A.cols());
 	for (int i = 0; i < 5; i++)
 		A(A.rows()-1, i) = pow(x, i);
+}
+
+void writingSmileToCSV(std::string nom_fichier, std::vector <double> abscisse, Polynome vol) {
+	//Writing the interpolated smile volatility to a csv file.
+
+	std::ofstream fichier(nom_fichier, std::ios::out | std::ios::trunc);  // ouverture en écriture avec effacement du fichier ouvert
+	for (std::vector <double>::iterator i = abscisse.begin(); i != abscisse.end(); ++i) {
+		fichier << *i << ";" << vol.eval(*i,0) << std::endl;
+	}
+	fichier.close();
+}
+
+void writingCumulDistrivToCSV(std::string nom_fichier, std::vector <double> abscisse, Polynome vol, double St, double T) {
+	//Writing the cumulated distribution to a csv file.
+
+	// ouverture en écriture avec effacement du fichier ouvert
+	std::ofstream fichier(nom_fichier, std::ios::out | std::ios::trunc); 
+	for (std::vector <double>::iterator i = abscisse.begin(); i != abscisse.end(); ++i) {
+		fichier << *i << ";" << riskNeutralCumulDistribEval(St, St - *i, T, 0, vol) << std::endl;
+	}
+	fichier.close();
+}
+
+void writingToCsv(double St, double T, Polynome vol) {
+
+	int S = floor(St);
+	std::vector<double> absCumulDistrib;
+	absCumulDistrib.push_back(St);
+	for (double i = 1; i < 50; i++)
+		absCumulDistrib.push_back(i*S / 20);
+	writingCumulDistrivToCSV("cumulativeDistribution.csv", absCumulDistrib, vol, St, T);
+
+	std::vector<double> absVolInterpol;
+	for (int i = 0; i <= 100; i++)
+		absVolInterpol.push_back(-3+i*6/100);
+	writingSmileToCSV("smileInterpolation.csv", absVolInterpol, vol);
 }
